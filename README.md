@@ -55,7 +55,7 @@ Every demo account uses the password **`studiopass`**. You can also click one on
 
 ## Dummy data
 
-`lib/server/db/store.js` keeps every table in memory and saves it to `data/db.json` (git-ignored) after each change. `lib/server/db/seed.js` creates 4 NYC studios, 4 instructors, 34 members, 8 classes and about 60 sessions (one week back, two weeks ahead) with realistic bookings. Dates are relative to the moment you seed, so run `npm run reset` if the demo data gets stale. Payments are simulated: buying a package just adds the credits.
+`lib/server/db/store.js` keeps every table in memory and saves it to `data/db.json` (git-ignored) after each change. `lib/server/db/seed.js` creates 4 NYC studios, 4 instructors, 16 members, 8 classes and about 40 sessions (five days back, nine days ahead) with realistic bookings. Dates are relative to the moment you seed, so run `npm run reset` if the demo data gets stale. Payments are simulated: buying a package just adds the credits.
 
 ## API routes
 
@@ -125,15 +125,18 @@ Both files run inside a transaction, so a failure leaves the database unchanged.
 
 **Supabase** (free tier): create a project → **SQL Editor** → **New query** → paste `001_init.sql` → **Run**. Then do the same with `seed.sql`.
 
-**Railway** (free trial): add a **PostgreSQL** service → copy its `DATABASE_URL` from the **Variables** tab, then:
+**Railway**: don't paste the files into the **Data** tab's query box. It adds its own `LIMIT` to your query and fails with `syntax error at or near "LIMIT"`. Use the scripts instead. In your Postgres service open **Variables** and copy `DATABASE_PUBLIC_URL` (the one that works from your laptop), then:
 
 ```bash
-psql "$DATABASE_URL" -f db/migrations/001_init.sql
-psql "$DATABASE_URL" -f db/seed.sql
+export DATABASE_URL="paste-the-url-here"
+npm run db:migrate   # create the tables
+npm run db:seed      # load the demo data
 ```
+
+`npm run db:reset` drops everything, re-creates the tables and re-seeds. `npm run db:down` drops everything. This works with Supabase too (use its connection string from **Connect**).
 
 Notes:
 
-- **Seed dates** are fixed when the file is generated. Run `npm run db:seed-sql` to regenerate `db/seed.sql` with fresh "one week back, two weeks ahead" dates before a demo, then load it into an empty database (run the down + up migration first to clear it).
+- **Seed dates** are fixed when the file is generated. Run `npm run db:seed-sql` to regenerate `db/seed.sql` with fresh "five days back, nine days ahead" dates before a demo, then load it into an empty database (run the down + up migration first to clear it).
 - **Row level security** is on with no policies. On Supabase this stops the public REST API (anon key) from reading the plain-text passwords. Connect the app with the database connection string instead; the owner role ignores RLS. It has no effect on Railway.
 - **The app doesn't use Postgres yet.** It still reads `data/db.json`. To switch, rewrite the services in `lib/server/services/` to query Postgres (for example with the `postgres` npm package and `DATABASE_URL`) instead of `getDb()`. They're already `async`, so the API routes and pages don't change. Book, cancel and change should then run in one SQL transaction so the capacity and credit checks can't race.
