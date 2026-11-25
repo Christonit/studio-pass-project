@@ -1,5 +1,6 @@
 import { Inter, Outfit } from 'next/font/google';
 import Providers from '@/components/Providers';
+import AgentationDev from '@/components/AgentationDev';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' });
@@ -17,6 +18,7 @@ export default function RootLayout({ children }) {
     <html lang="en" className={`${inter.variable} ${outfit.variable}`}>
       <body>
         <Providers>{children}</Providers>
+        <AgentationDev />
       </body>
     </html>
   );
