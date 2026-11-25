@@ -41,7 +41,7 @@ In Railway: Postgres service > Settings > Networking > enable "TCP Proxy", then 
   process.exit(1);
 }
 const local = /@(localhost|127\.0\.0\.1)[:/]/.test(url);
-const sql = postgres(url, { ssl: local ? false : 'prefer', max: 1, onnotice: () => {}, connect_timeout: 20 });
+const sql = postgres(url, { ssl: local ? false : 'prefer', max: 1, onnotice: () => { }, connect_timeout: 20 });
 
 try {
   const host = new URL(url).host;
