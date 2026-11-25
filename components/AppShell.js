@@ -20,6 +20,7 @@ const NAV = {
     ['/admin', 'Proposals'],
     ['/admin/classes', 'Classes & sessions'],
     ['/admin/locations', 'Locations & ZIP tags'],
+    ['/admin/reports', 'Reports'],
   ],
 };
 

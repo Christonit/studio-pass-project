@@ -14,6 +14,8 @@ const catalog = await import('../lib/server/services/catalog.js');
 const proposals = await import('../lib/server/services/proposals.js');
 const admin = await import('../lib/server/services/admin.js');
 const instructor = await import('../lib/server/services/instructor.js');
+const reports = await import('../lib/server/services/reports.js');
+const { pricingSignal } = await import('../lib/server/services/pricing.js');
 
 beforeEach(() => {
   clock.now = () => new Date();
@@ -240,4 +242,45 @@ test('instructor marks attendance only on their own sessions', async () => {
 test('ZIP tags: valid lists saved, bad ZIPs rejected', async () => {
   assert.deepEqual((await admin.updateLocation(1, { zip_tags: '11211, 11222' })).zip_tags, ['11211', '11222']);
   await rejects(admin.updateInstructor('maya@studiopass.test', { zip_tags: ['abc'] }), 400);
+});
+
+// --- Reports --------------------------------------------------------------------
+
+test('reports: totals match the raw data', async () => {
+  const r = await reports.getReports({ days: 'all' });
+  const db = getDb();
+  const purchases = db.credit_transactions.filter((t) => t.type === 'purchase');
+  assert.equal(r.summary.revenue_usd, purchases.reduce((n, t) => n + t.amount_usd, 0));
+  assert.equal(r.summary.credits_sold, purchases.reduce((n, t) => n + t.delta, 0));
+  assert.equal(r.summary.unused_credits, db.users.filter((u) => u.role === 'member').reduce((n, u) => n + u.credits, 0));
+  // Every breakdown adds back up to the headline numbers.
+  const sum = (rows, k) => rows.reduce((n, x) => n + x[k], 0);
+  assert.equal(sum(r.classes, 'taken'), r.summary.visits);
+  assert.equal(sum(r.studios, 'credits'), r.summary.credits_earned);
+  assert.equal(sum(r.instructors, 'sessions'), r.summary.sessions_held);
+  assert.equal(sum(r.member_zips, 'visits'), r.summary.visits);
+  assert.equal(sum(r.packages, 'revenue_usd'), r.summary.revenue_usd);
+  assert.ok(r.summary.fill_pct > 0 && r.summary.fill_pct <= 100);
+});
+
+test('reports: a new purchase shows up as revenue; bad periods are rejected', async () => {
+  const before = (await reports.getReports({ days: '7' })).summary.revenue_usd;
+  await credits.purchasePackage(casey(), 2);
+  const after = await reports.getReports({ days: '7' });
+  assert.equal(after.summary.revenue_usd, before + 100);
+  assert.equal(after.packages.find((p) => p.package_id === 2).sold, 1);
+  await rejects(reports.getReports({ days: '5' }), 400);
+});
+
+test('reports: ZIPs with members but no studio are called out', async () => {
+  await auth.signup({ name: 'Far Away', email: 'far@x.test', password: 'pass', zip: '90210' });
+  const z = (await reports.getReports({ days: '30' })).member_zips.find((x) => x.zip === '90210');
+  assert.deepEqual(z.served_by, []);
+});
+
+test('pricing rule: >80% full three sessions in a row suggests +1 credit', () => {
+  assert.deepEqual(pricingSignal([0.5, 0.85, 0.9, 1]), { action: 'raise', change: 1 });
+  assert.equal(pricingSignal([0.9, 0.8, 0.95]).action, 'keep'); // exactly 80% is not "more than"
+  assert.equal(pricingSignal([0.3, 0.2, 0.1]).action, 'lower');
+  assert.equal(pricingSignal([0.9, 0.9]).action, 'wait');
 });

@@ -13,7 +13,7 @@ This build covers **weeks 1–4** of the timeline:
 | 3 | Booking, credits & proposals | `lib/server/services/bookings.js`, `credits.js`, `proposals.js` |
 | 3–4 | Member, instructor & admin pages | `app/member/`, `app/instructor/`, `app/admin/` |
 
-Weeks 5–6 are not built yet: reports, dynamic pricing rules, the real database, and demo prep.
+Week 5 reports are built: **Admin → Reports** (`app/admin/reports/`, `lib/server/services/reports.js`) shows revenue, class utilization, no-shows, studios, instructors and demand by member ZIP for the last 7/30/90 days or all time, and flags classes for a price change using the deck's pricing rule. The rule only suggests for now; applying it automatically, the real database, and demo prep are still to do.
 
 ## Run it
 
@@ -67,7 +67,7 @@ All routes live under `app/api/` and return JSON. Errors come back as `{ "error"
 | Catalog | `GET /api/meta` · `GET /api/credit-packages` · `GET /api/sessions?q=&discipline=&level=&zip=&days=&class_id=` · `GET /api/sessions/:id` |
 | Member | `GET, POST /api/me/bookings` · `POST /api/me/bookings/:id/cancel` · `POST /api/me/bookings/:id/change` · `GET /api/me/credits` · `POST /api/me/credits/purchase` |
 | Instructor | `GET, POST /api/instructor/proposals` · `GET /api/instructor/sessions` · `GET /api/instructor/sessions/:id/roster` · `POST /api/instructor/bookings/:id/attendance` |
-| Admin | `GET /api/admin/proposals` · `POST /api/admin/proposals/:id/approve` · `.../reject` · `GET, POST /api/admin/classes` · `PATCH /api/admin/classes/:id` · `GET, POST /api/admin/classes/:id/sessions` · `PATCH /api/admin/sessions/:id` · `POST /api/admin/sessions/:id/cancel` · `GET /api/admin/sessions/:id/roster` · `GET, POST /api/admin/locations` · `PATCH /api/admin/locations/:id` · `GET /api/admin/instructors` · `PATCH /api/admin/instructors/:email` |
+| Admin | `GET /api/admin/proposals` · `POST /api/admin/proposals/:id/approve` · `.../reject` · `GET, POST /api/admin/classes` · `PATCH /api/admin/classes/:id` · `GET, POST /api/admin/classes/:id/sessions` · `PATCH /api/admin/sessions/:id` · `POST /api/admin/sessions/:id/cancel` · `GET /api/admin/sessions/:id/roster` · `GET, POST /api/admin/locations` · `PATCH /api/admin/locations/:id` · `GET /api/admin/instructors` · `PATCH /api/admin/instructors/:email` · `GET /api/admin/reports?days=7|30|90|all` |
 
 Each route file is a few lines: it wraps a service function with `handler()` from `lib/server/http.js`, which reads the session cookie, checks the role, parses the JSON body and formats errors.
 
@@ -79,7 +79,7 @@ app/
   page.js                     Sign in / create account
   member/                     Find classes, My bookings, Credits
   instructor/                 Rosters & attendance, Class proposals
-  admin/                      Proposals, Classes & sessions, Locations & ZIP tags
+  admin/                      Proposals, Classes & sessions, Locations & ZIP tags, Reports
   api/                        Backend: Next.js route handlers
 components/
   AppShell.js                 Header/nav for signed-in pages + useSession()
@@ -93,8 +93,8 @@ lib/
     http.js                   Route-handler wrapper + session cookie
     session.js                Signed-in user for server layouts (role guards)
     db/                       Dummy JSON store + seed
-    services/                 Business logic: auth, bookings, credits, proposals, admin, instructor, catalog
-test/api.test.js              19 tests
+    services/                 Business logic: auth, bookings, credits, proposals, admin, instructor, catalog, reports, pricing
+test/api.test.js              23 tests
 db/migrations/                Postgres schema (001_init.sql) and its undo
 db/seed.sql                   Postgres demo data, generated from the dummy seed
 scripts/                      reset.js, export-seed-sql.js

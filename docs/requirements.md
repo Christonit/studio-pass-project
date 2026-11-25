@@ -39,9 +39,13 @@ Replace paper sign-ins, spreadsheets and generic calendars with one system for b
 | A5 | Tag studios (locations) and instructors by ZIP code | Done |
 | A6 | Override the credit price of a single session | Done |
 
+### Week 5
+| ID | Requirement | Status |
+|----|-------------|--------|
+| R1 | Reports: revenue, class utilization, no-shows, studios, instructors, demand by member ZIP; period filter; printable | Done (Admin → Reports) |
+| R2 | Rule-based pricing: more than 80% full for three sessions in a row → raise by one credit; under 40% → flag for a lower price | Suggested on the Reports page; not applied automatically yet (`lib/server/services/pricing.js`) |
+
 ### Planned for weeks 5–6 (not built yet)
-- Utilization, revenue and ZIP-code reports / dashboards.
-- Rule-based dynamic pricing. Example rule from the deck: if a class is more than 80% full for three sessions in a row, raise its price by one credit. The hook is `lib/server/services/pricing.js`.
 - Real database (Supabase/Postgres) and real authentication (hashed passwords, signed sessions).
 - Bug fixes, demo prep and final report.
 
